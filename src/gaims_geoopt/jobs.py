@@ -1,6 +1,7 @@
 from atomate2.forcefields.jobs import ForceFieldRelaxMaker
 from atomate2.forcefields import MLFF
 from jobflow import Flow, job, Response
+import numpy as np
 
 @job
 def evaluate_max_force(forces):

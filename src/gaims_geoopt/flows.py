@@ -1,7 +1,9 @@
+from dataclass import dataclass
 from atomate2.ase.jobs import GFNxTBStaticMaker
-from jobflow import Flow, job, Response
+from jobflow import Flow, job, Response, Maker
 from autoplex.fitting.common.jobs import machine_learning_fit
 import logging
+from gaims_geoopt.jobs import evaluate_max_force, add_structure_database, get_mace_relax_job
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -64,17 +66,19 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
     flow = Flow([job_macefit, job_relax, job_static, job_max_force, job_add_database, job_check_convergence_and_next])
     return Response(replace=flow)
 
-    
-def define_flow(molecule, database_dict, max_force_criteria):
-    job_static = GFNxTBStaticMaker(
-        calculator_kwargs={"method": "GFN2-xTB"},
-    ).make(molecule)
-    job_max_force = evaluate_max_force(job_static.output.output.forces)
-    job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct)
-    job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
-                                                                job_add_database.output,
-                                                                job_max_force.output,
-                                                                max_force_criteria
-                                                                )
-    jobs = [job_static, job_max_force, job_add_database, job_check_convergence_and_next]
-    return Flow(jobs)
+@dataclass    
+class MLIPAssistedGeoOptMaker(Maker):
+    name: str = "MLIP assisted GeoOpt"
+    def make(self, molecule, database_dict, max_force_criteria):
+        job_static = GFNxTBStaticMaker(
+            calculator_kwargs={"method": "GFN2-xTB"},
+        ).make(molecule)
+        job_max_force = evaluate_max_force(job_static.output.output.forces)
+        job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct)
+        job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
+                                                                    job_add_database.output,
+                                                                    job_max_force.output,
+                                                                    max_force_criteria
+                                                                    )
+        jobs = [job_static, job_max_force, job_add_database, job_check_convergence_and_next]
+        return Flow(jobs)
