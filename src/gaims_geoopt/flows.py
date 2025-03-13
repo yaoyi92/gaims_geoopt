@@ -1,4 +1,4 @@
-from dataclass import dataclass
+from dataclasses import dataclass
 from atomate2.ase.jobs import GFNxTBStaticMaker
 from jobflow import Flow, job, Response, Maker
 from autoplex.fitting.common.jobs import machine_learning_fit
