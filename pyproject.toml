@@ -35,7 +35,6 @@ dependencies = [
      "typing",
      "torchdata==0.7.1",
      "torch==2.2.1",
-     "autoplex"
 ]
 
 [tool.setuptools.packages.find]
@@ -71,7 +70,6 @@ strict = [
      "numpy==1.26.4",
      "typing",
      "torchdata==0.7.1",
-     "autoplex"
 ]
 dev = ["pre-commit>=2.12.1"]
 tests = ["pytest", "pytest-mock", "pytest-split", "pytest-cov", "types-setuptools", "nbmake"]
