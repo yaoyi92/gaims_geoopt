@@ -52,7 +52,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                       save_cpu =True,
                       seed = 3,
                   )
-    job_relax = get_mace_relax_job(job_macefit.output, struct)
+    job_relax = get_mace_relax_job(job_macefit.output, struct, max_force_criteria)
     job_static = GFNxTBStaticMaker(
         calculator_kwargs={"method": "GFN2-xTB"},
     ).make(job_relax.output.output.molecule)

@@ -20,11 +20,11 @@ def add_structure_database(database_dict, mol_or_struct):
     return database_dict
 
 @job
-def get_mace_relax_job(mlip_output, struct):
+def get_mace_relax_job(mlip_output, struct, max_force_criteria):
     mace_maker = ForceFieldRelaxMaker(
         force_field_name = MLFF.MACE,
         calculator_kwargs = {'model':f'{mlip_output["mlip_path"][0]}/MACE_compiled.model'},
-        relax_kwargs = {'fmax':0.025})
+        relax_kwargs = {'fmax':max_force_criteria/2})
     job_relax = mace_maker.make(struct)
     flow = Flow([job_relax,])
     return Response(replace=flow, output=job_relax.output)
