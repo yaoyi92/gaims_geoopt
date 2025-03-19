@@ -2,10 +2,11 @@ from pymatgen.core import Molecule
 from jobflow import run_locally, job
 from pymatgen.io.ase import AseAtomsAdaptor
 import ase
-from tblite.ase import TBLite
 import numpy as np
-from autoplex.fitting.common.jobs import machine_learning_fit
 import logging
+from gaims_geoopt.flows import MLIPAssistedGeoOptMaker
+from ase.calculators.singlepoint import SinglePointCalculator
+from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -14,35 +15,16 @@ logging.basicConfig(
 
 
 molecule = Molecule.from_str(
-"""24
+"""3
 Properties=species:S:1:pos:R:3 pbc="F F F"
-C        0.45285612       3.01426506      -2.32330513
-C       -0.65326887       3.32036090      -1.70732403
-O       -0.82637185       2.63587189      -0.55307001
-C        0.26635113       1.80842292      -0.42423803
-O        0.50404215       1.07012391       0.47730500
-O        1.20395112       2.09938192      -1.54059100
-H        0.99488211       3.42258286      -3.19497991
-H       -1.42996383       3.95062685      -2.12583590
-C        1.26803315       0.08491497       2.52308202
-C        0.71784115      -0.92897701       3.20788789
-O        0.64552510      -2.02956414       2.40690088
-C        1.62233818      -1.82807600       1.46278298
-O        2.07954812      -2.65240097       0.69964898
-O        1.90033615      -0.53814703       1.52785194
-H        1.60973608       0.97362196       3.01618791
-H       -0.23638988      -0.89091206       3.98334789
-C       -2.61711597      -1.50253499       0.01472599
-C       -1.65134692      -2.33284712      -0.23200200
-O       -0.75461686      -1.64041007      -1.12287402
-C       -1.23930693      -0.42871904      -1.39447701
-O       -0.76134789       0.30777997      -2.22421694
-O       -2.37302589      -0.32890302      -0.69123900
-H       -3.27383399      -1.43262005       0.79540098
-H       -1.51131582      -3.31143308       0.29795000""",
+O 0.0 0.0 0.0
+H 1.0 0.0 0.0
+H 0.0 1.0 0.0
+""",
 fmt="xyz",
 )
 atoms = molecule.to_ase_atoms()
+atomic_energies = {"O": -2043.567004718,  "H": -13.598030178}
 
 list_training = []
 list_valid = []
@@ -50,8 +32,7 @@ list_valid = []
 elements = set(atoms.get_chemical_symbols())
 for element in elements:
     atoms_freeatom = ase.Atoms(element)
-    atoms_freeatom.calc = TBLite(method="GFN2-xTB")
-    atoms_freeatom.get_potential_energy()
+    atoms_freeatom.calc = SinglePointCalculator(atoms = atoms_freeatom, energy=atomic_energies[element])
     atoms_freeatom.info['REF_energy'] = atoms_freeatom.get_potential_energy()
     atoms_freeatom.arrays['REF_forces'] = np.array([[0.0, 0.0, 0.0]])
     atoms_freeatom.info['REF_virial'] = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
@@ -71,10 +52,15 @@ database_dict = {
     ],
 }
 
+species_dir=Path("/home/yiy/Test/fhi-aims/FHIaims/species_defaults/defaults_2020")
 
+parameters = {
+    "species_dir": (species_dir / "light").as_posix(),
+    "compute_forces": True,
+}
 
-
-fl = define_flow(molecule, database_dict, 0.05)
+fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.02, 
+                                    calculator = "aims", calculator_kwargs=parameters)
 response = run_locally(fl, create_folders=True)
 
 flow_now = fl
