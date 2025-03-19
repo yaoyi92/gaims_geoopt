@@ -9,12 +9,12 @@ def evaluate_max_force(forces):
     return np.max(np.sum(forces**2, axis=1)**0.5)
 
 @job
-def add_structure_database(database_dict, mol_or_struct):
+def add_structure_database(database_dict, mol_or_struct, forces):
     mol_or_struct_copy = mol_or_struct.copy()
     mol_or_struct_copy.properties["REF_energy"] = mol_or_struct.properties["energy"]
     mol_or_struct_copy.properties["REF_virial"] = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
     for i in range(len(mol_or_struct)):
-        mol_or_struct_copy.sites[i].properties["REF_forces"] = mol_or_struct.properties["forces"][i]
+        mol_or_struct_copy.sites[i].properties["REF_forces"] = forces[i]
     database_dict["train.extxyz"].append(mol_or_struct_copy)
     database_dict["test.extxyz"].append(mol_or_struct_copy)
     return database_dict
