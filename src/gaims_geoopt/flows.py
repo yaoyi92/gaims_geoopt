@@ -39,6 +39,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                       species_list=None,
                       num_processes_fit=1,
                       foundation_model="small",
+                      stage_two=False,
                       multiheads_finetuning=False,
                       loss="ef",
                       energy_weight = 1.0,
