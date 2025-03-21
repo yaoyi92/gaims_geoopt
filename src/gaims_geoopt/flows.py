@@ -12,11 +12,16 @@ logging.basicConfig(
 )
 
 @job 
-def check_convergence_and_next(struct, database_dict, max_force, max_force_criteria, calculator, calculator_kwargs):
-    if max_force < max_force_criteria:
-        logging.info(
-            f"MLIP assisted Geometry Optimization Converged with max_force: {max_force} < {max_force_criteria}"
-        )
+def check_convergence_and_next(struct, database_dict, max_force, max_force_criteria, n_steps, calculator, calculator_kwargs):
+    if max_force < max_force_criteria or n_steps == 1:
+        if max_force < max_force_criteria:
+            logging.info(
+                f"MLIP assisted Geometry Optimization Converged with max_force: {max_force} < {max_force_criteria}"
+            )
+        elif n_steps == 1:
+            logging.info(
+                f"MLIP assisted Geometry Optimization stuck with ML relax not moving."
+            )
 
         return None
     logging.info(
@@ -42,7 +47,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                       E0s = "isolated",
                       scaling = "rms_forces_scaling",
                       batch_size = 2,
-                      max_num_epochs = 1000,
+                      max_num_epochs = 3000,
                       ema=True,
                       ema_decay = 0.99,
                       amsgrad=True,
@@ -69,6 +74,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                                                                     job_add_database.output,
                                                                     job_max_force.output,
                                                                     max_force_criteria,
+                                                                    job_relax.output.output.n_steps,
                                                                     calculator,
                                                                     calculator_kwargs,
                                                                     )
@@ -82,6 +88,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                                                                     job_add_database.output,
                                                                     job_max_force.output,
                                                                     max_force_criteria, 
+                                                                    job_relax.output.output.n_steps,
                                                                     calculator,
                                                                     calculator_kwargs
                                                                     )
@@ -102,6 +109,7 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         job_add_database.output,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
+                                                                        job_relax.output.output.n_steps,
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
@@ -115,6 +123,7 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         job_add_database.output,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
+                                                                        job_relax.output.output.n_steps,
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
