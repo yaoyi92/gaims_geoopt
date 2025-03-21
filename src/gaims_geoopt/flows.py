@@ -109,7 +109,7 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         job_add_database.output,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
-                                                                        job_relax.output.output.n_steps,
+                                                                        -1,
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
@@ -123,7 +123,7 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         job_add_database.output,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
-                                                                        job_relax.output.output.n_steps,
+                                                                        -1,
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
