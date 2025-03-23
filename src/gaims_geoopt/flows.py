@@ -16,7 +16,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
     if max_force < max_force_criteria or n_steps == 1:
         if max_force < max_force_criteria:
             logging.info(
-                f"MLIP assisted Geometry Optimization Converged with max_force: {max_force} < {max_force_criteria}"
+                f"MLIP assisted Geometry Optimization Converged with max_force: {max_force} < {max_force_criteria}, ML assisted relax steps: {n_steps}"
             )
         elif n_steps == 1:
             logging.info(
@@ -25,7 +25,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
 
         return None
     logging.info(
-        f"MLIP assisted Geometry Optimization continues with max_force: {max_force} > {max_force_criteria}"
+        f"MLIP assisted Geometry Optimization continues with max_force: {max_force} > {max_force_criteria}, ML assisted steps: {n_steps}"
     )
     job_macefit = machine_learning_fit(
                       database_dir=None,
@@ -39,21 +39,22 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                       species_list=None,
                       num_processes_fit=1,
                       foundation_model="small",
-                      stage_two=False,
                       multiheads_finetuning=False,
-                      loss="ef",
-                      energy_weight = 1.0,
+                      loss="forces_only",
+                      energy_weight = 0.0,
                       forces_weight = 1.0,
                       stress_weight = 0.0,
                       E0s = "isolated",
                       scaling = "rms_forces_scaling",
-                      batch_size = 2,
-                      max_num_epochs = 3000,
+                      batch_size = 1,
+                      max_num_epochs = 1000,
                       ema=True,
                       ema_decay = 0.99,
+                      swa=False,
+                      start_swa=3000,
                       amsgrad=True,
                       default_dtype = "float64",
-                      keep_isolated_atoms=True,
+                      keep_isolated_atoms=False,
                       lr = 0.01,
                       patience = 500,
                       device = "cpu",
