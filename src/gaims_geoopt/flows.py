@@ -12,7 +12,7 @@ logging.basicConfig(
 )
 
 @job 
-def check_convergence_and_next(struct, database_dict, max_force, max_force_criteria, n_steps, calculator, calculator_kwargs):
+def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, n_steps, calculator, calculator_kwargs):
     if max_force < max_force_criteria or n_steps == 1:
         if max_force < max_force_criteria:
             logging.info(
@@ -27,6 +27,10 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
     logging.info(
         f"MLIP assisted Geometry Optimization continues with max_force: {max_force} > {max_force_criteria}, ML assisted steps: {n_steps}"
     )
+    if last_dir is None:
+        foundation_model = "small"
+    else:
+        foundation_model = last_dir[0] + "/MACE.model"
     job_macefit = machine_learning_fit(
                       database_dir=None,
                       database_dict=database_dict,
@@ -38,7 +42,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                       ref_virial_name=None,
                       species_list=None,
                       num_processes_fit=1,
-                      foundation_model="small",
+                      foundation_model=foundation_model,
                       multiheads_finetuning=False,
                       loss="forces_only",
                       energy_weight = 0.0,
@@ -47,7 +51,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
                       E0s = "average",
                       scaling = "rms_forces_scaling",
                       batch_size = 1,
-                      max_num_epochs = 1000,
+                      max_num_epochs = 500,
                       ema=True,
                       ema_decay = 0.99,
                       swa=False,
@@ -74,6 +78,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
         job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces)
         job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
                                                                     job_add_database.output,
+                                                                    job_macefit.output.mlip_path,
                                                                     job_max_force.output,
                                                                     max_force_criteria,
                                                                     job_relax.output.output.n_steps,
@@ -88,6 +93,7 @@ def check_convergence_and_next(struct, database_dict, max_force, max_force_crite
         job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces)
         job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
                                                                     job_add_database.output,
+                                                                    job_macefit.output.mlip_path,
                                                                     job_max_force.output,
                                                                     max_force_criteria, 
                                                                     job_relax.output.output.n_steps,
@@ -109,6 +115,7 @@ class MLIPAssistedGeoOptMaker(Maker):
             job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces)
             job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
                                                                         job_add_database.output,
+                                                                        None,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
                                                                         -1,
@@ -123,6 +130,7 @@ class MLIPAssistedGeoOptMaker(Maker):
             job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces)
             job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
                                                                         job_add_database.output,
+                                                                        None,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
                                                                         -1,
