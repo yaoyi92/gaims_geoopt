@@ -76,9 +76,8 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
     #).make(job_relax.output.output.molecule)
     #job_max_force = evaluate_max_force(job_static.output.output.forces)
     if calculator == "GFN2-xTB":
-        calculator_kwargs_default = {"method": "GFN2-xTB"},
         job_static = GFNxTBStaticMaker(
-            calculator_kwargs=calculator_kwargs_default,
+            calculator_kwargs={"method": "GFN2-xTB"},
         ).make(job_relax.output.output.molecule)
         job_max_force = evaluate_max_force(job_static.output.output.forces)
         job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces)
