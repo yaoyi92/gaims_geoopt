@@ -12,7 +12,7 @@ logging.basicConfig(
 )
 
 @job 
-def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, n_steps, calculator, calculator_kwargs):
+def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, n_steps, machine_learning_fit_kwargs, relax_calculator_kwargs, calculator, calculator_kwargs):
     if max_force < max_force_criteria or n_steps == 1:
         if max_force < max_force_criteria:
             logging.info(
@@ -28,51 +28,57 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
         f"MLIP assisted Geometry Optimization continues with max_force: {max_force} > {max_force_criteria}, ML assisted steps: {n_steps}"
     )
     if last_dir is None:
-        foundation_model = "small"
+        #foundation_model = "small"
+        if "foundation_model" not in machine_learning_fit_kwargs:
+            machine_learning_fit_kwargs["foundation_model"] = "small"
     else:
-        foundation_model = last_dir[0] + "/MACE.model"
-    job_macefit = machine_learning_fit(
-                      database_dir=None,
-                      database_dict=database_dict,
-                      run_fits_on_different_cluster=True,
-                      name="MACE",
-                      mlip_type="MACE",
-                      ref_energy_name="REF_energy",
-                      ref_force_name="REF_forces",
-                      ref_virial_name=None,
-                      species_list=None,
-                      num_processes_fit=1,
-                      foundation_model=foundation_model,
-                      multiheads_finetuning=False,
-                      loss="forces_only",
-                      energy_weight = 0.0,
-                      forces_weight = 1.0,
-                      stress_weight = 0.0,
-                      E0s = "average",
-                      scaling = "rms_forces_scaling",
-                      batch_size = 1,
-                      max_num_epochs = 500,
-                      ema=True,
-                      ema_decay = 0.99,
-                      swa=False,
-                      start_swa=3000,
-                      amsgrad=True,
-                      default_dtype = "float64",
-                      keep_isolated_atoms=False,
-                      lr = 0.001,
-                      patience = 500,
-                      device = "cpu",
-                      save_cpu =True,
-                      seed = 3,
-                  )
-    job_relax = get_mace_relax_job(job_macefit.output, struct, max_force_criteria)
+        #foundation_model = last_dir[0] + "/MACE.model"
+        machine_learning_fit_kwargs["foundation_model"] = last_dir[0] + "/MACE.model"
+    machine_learning_fit_kwargs_default = {
+        "database_dir":None,
+        "database_dict":database_dict,
+        "run_fits_on_different_cluster":True,
+        "name":"MACE",
+        "mlip_type":"MACE",
+        "ref_energy_name":"REF_energy",
+        "ref_force_name":"REF_forces",
+        "ref_virial_name":None,
+        "species_list":None,
+        "num_processes_fit":1,
+        #"foundation_model":foundation_model,
+        "multiheads_finetuning":False,
+        "loss":"forces_only",
+        "energy_weight" : 0.0,
+        "forces_weight" : 1.0,
+        "stress_weight" : 0.0,
+        "E0s" : "average",
+        "scaling" : "rms_forces_scaling",
+        "batch_size" : 1,
+        "max_num_epochs" : 500,
+        "ema":True,
+        "ema_decay" : 0.99,
+        "swa":False,
+        "start_swa":3000,
+        "amsgrad":True,
+        "default_dtype" : "float64",
+        "keep_isolated_atoms":False,
+        "lr" : 0.001,
+        "patience" : 500,
+        "device" : "cpu",
+        "save_cpu" :True,
+        "seed" : 3,
+    }
+    machine_learning_fit_kwargs_default.update(machine_learning_fit_kwargs)
+    job_macefit = machine_learning_fit(**machine_learning_fit_kwargs_default)
+    job_relax = get_mace_relax_job(job_macefit.output, struct, max_force_criteria, relax_calculator_kwargs)
     #job_static = GFNxTBStaticMaker(
     #    calculator_kwargs={"method": "GFN2-xTB"},
     #).make(job_relax.output.output.molecule)
     #job_max_force = evaluate_max_force(job_static.output.output.forces)
     if calculator == "GFN2-xTB":
+        calculator_kwargs_default = {"method": "GFN2-xTB"},
         job_static = GFNxTBStaticMaker(
-            calculator_kwargs={"method": "GFN2-xTB"},
+            calculator_kwargs=calculator_kwargs_default,
         ).make(job_relax.output.output.molecule)
         job_max_force = evaluate_max_force(job_static.output.output.forces)
         job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces)
@@ -82,6 +88,8 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
                                                                     job_max_force.output,
                                                                     max_force_criteria,
                                                                     job_relax.output.output.n_steps,
+                                                                    machine_learning_fit_kwargs,
+                                                                    relax_calculator_kwargs,
                                                                     calculator,
                                                                     calculator_kwargs,
                                                                     )
@@ -97,6 +105,8 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
                                                                     job_max_force.output,
                                                                     max_force_criteria, 
                                                                     job_relax.output.output.n_steps,
+                                                                    machine_learning_fit_kwargs,
+                                                                    relax_calculator_kwargs,
                                                                     calculator,
                                                                     calculator_kwargs
                                                                     )
@@ -106,7 +116,7 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
 @dataclass    
 class MLIPAssistedGeoOptMaker(Maker):
     name: str = "MLIP assisted GeoOpt"
-    def make(self, molecule, database_dict, max_force_criteria, calculator = "GFN2-xTB", calculator_kwargs = {}):
+    def make(self, molecule, database_dict, max_force_criteria, machine_learning_fit_kwargs={}, relax_calculator_kwargs={}, calculator = "GFN2-xTB", calculator_kwargs = {}):
         if calculator == "GFN2-xTB":
             job_static = GFNxTBStaticMaker(
                 calculator_kwargs={"method": "GFN2-xTB"},
@@ -119,6 +129,8 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
                                                                         -1,
+                                                                        machine_learning_fit_kwargs,
+                                                                        relax_calculator_kwargs,
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
@@ -134,6 +146,8 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
                                                                         -1,
+                                                                        machine_learning_fit_kwargs,
+                                                                        relax_calculator_kwargs
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
