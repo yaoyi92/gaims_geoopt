@@ -147,7 +147,7 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         max_force_criteria, 
                                                                         -1,
                                                                         machine_learning_fit_kwargs,
-                                                                        relax_calculator_kwargs
+                                                                        relax_calculator_kwargs,
                                                                         calculator,
                                                                         calculator_kwargs
                                                                         )
