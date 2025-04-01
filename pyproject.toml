@@ -26,15 +26,19 @@ requires-python = ">=3.10,<3.12"
 dependencies = [
      "pymatgen>=2024.9.17.1",
      "atomate2 @ git+https://github.com/yaoyi92/atomate2.git@mol_for_forcefield",
+     "autoplex @ git+https://github.com/yaoyi92/autoplex.git@gaims_geoopt_env",
      "ase==3.23.0",
      "calorine>=3.0",
      "matgl==1.1.3",
-     "mace-torch==0.3.9",
+     "mace-torch==0.3.12",
      "numpy==1.26.4",
      "lightning-utilities==0.11.9",
      "typing",
      "torchdata==0.7.1",
-     "torch==2.2.1",
+     "torch==2.5.0",
+     "cuequivariance",
+     "cuequivariance-torch",
+     "cuequivariance-ops-torch-cu12",
 ]
 
 [tool.setuptools.packages.find]
