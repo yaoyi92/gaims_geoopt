@@ -12,7 +12,7 @@ logging.basicConfig(
 )
 
 @job 
-def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, n_steps, machine_learning_fit_kwargs, relax_calculator_kwargs, calculator, calculator_kwargs):
+def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, database_size_limit, n_steps, machine_learning_fit_kwargs, relax_calculator_kwargs, calculator, calculator_kwargs):
     if max_force < max_force_criteria or n_steps == 1:
         if max_force < max_force_criteria:
             logging.info(
@@ -80,12 +80,13 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
             calculator_kwargs={"method": "GFN2-xTB"},
         ).make(job_relax.output.output.molecule)
         job_max_force = evaluate_max_force(job_static.output.output.forces)
-        job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces)
+        job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces, database_size_limit)
         job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
                                                                     job_add_database.output,
                                                                     job_macefit.output.mlip_path,
                                                                     job_max_force.output,
                                                                     max_force_criteria,
+                                                                    database_size_limit,
                                                                     job_relax.output.output.n_steps,
                                                                     machine_learning_fit_kwargs,
                                                                     relax_calculator_kwargs,
@@ -97,12 +98,13 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
             input_set_generator=StaticSetGenerator(user_params=calculator_kwargs)
         ).make(job_relax.output.output.molecule)
         job_max_force = evaluate_max_force(job_static.output.output.forces)
-        job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces)
+        job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces, database_size_limit)
         job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
                                                                     job_add_database.output,
                                                                     job_macefit.output.mlip_path,
                                                                     job_max_force.output,
                                                                     max_force_criteria, 
+                                                                    database_size_limit,
                                                                     job_relax.output.output.n_steps,
                                                                     machine_learning_fit_kwargs,
                                                                     relax_calculator_kwargs,
@@ -115,18 +117,19 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
 @dataclass    
 class MLIPAssistedGeoOptMaker(Maker):
     name: str = "MLIP assisted GeoOpt"
-    def make(self, molecule, database_dict, max_force_criteria, machine_learning_fit_kwargs={}, relax_calculator_kwargs={}, calculator = "GFN2-xTB", calculator_kwargs = {}):
+    def make(self, molecule, database_dict, max_force_criteria, database_size_limit = 10, machine_learning_fit_kwargs={}, relax_calculator_kwargs={}, calculator = "GFN2-xTB", calculator_kwargs = {}):
         if calculator == "GFN2-xTB":
             job_static = GFNxTBStaticMaker(
                 calculator_kwargs={"method": "GFN2-xTB"},
             ).make(molecule)
             job_max_force = evaluate_max_force(job_static.output.output.forces)
-            job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces)
+            job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces, database_size_limit)
             job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
                                                                         job_add_database.output,
                                                                         None,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
+                                                                        database_size_limit,
                                                                         -1,
                                                                         machine_learning_fit_kwargs,
                                                                         relax_calculator_kwargs,
@@ -138,12 +141,13 @@ class MLIPAssistedGeoOptMaker(Maker):
                 input_set_generator=StaticSetGenerator(user_params=calculator_kwargs)
             ).make(molecule)
             job_max_force = evaluate_max_force(job_static.output.output.forces)
-            job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces)
+            job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces, database_size_limit)
             job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
                                                                         job_add_database.output,
                                                                         None,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
+                                                                        database_size_limit,
                                                                         -1,
                                                                         machine_learning_fit_kwargs,
                                                                         relax_calculator_kwargs,

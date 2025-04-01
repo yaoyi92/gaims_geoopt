@@ -9,7 +9,7 @@ def evaluate_max_force(forces):
     return np.max(np.sum(forces**2, axis=1)**0.5)
 
 @job
-def add_structure_database(database_dict, mol_or_struct, forces):
+def add_structure_database(database_dict, mol_or_struct, forces, database_size_limit = 10):
     mol_or_struct_copy = mol_or_struct.copy()
     mol_or_struct_copy.properties["REF_energy"] = mol_or_struct.properties["energy"]
     mol_or_struct_copy.properties["REF_virial"] = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
@@ -17,11 +17,10 @@ def add_structure_database(database_dict, mol_or_struct, forces):
         mol_or_struct_copy.sites[i].properties["REF_forces"] = forces[i]
     database_dict["train.extxyz"].append(mol_or_struct_copy)
     database_dict["test.extxyz"].append(mol_or_struct_copy)
-    if "database_size_limit" in database_dict:
-        while len(database_dict["train.extxyz"]) > database_dict["database_size_limit"]:
-            database_dict["train.extxyz"].pop(0)
-        while len(database_dict["test.extxyz"]) > database_dict["database_size_limit"]:
-            database_dict["test.extxyz"].pop(0)
+    while len(database_dict["train.extxyz"]) > database_size_limit:
+        database_dict["train.extxyz"].pop(0)
+    while len(database_dict["test.extxyz"]) > database_size_limit:
+        database_dict["test.extxyz"].pop(0)
     return database_dict
 
 @job
