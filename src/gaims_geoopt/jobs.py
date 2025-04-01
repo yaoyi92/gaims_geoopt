@@ -17,6 +17,11 @@ def add_structure_database(database_dict, mol_or_struct, forces):
         mol_or_struct_copy.sites[i].properties["REF_forces"] = forces[i]
     database_dict["train.extxyz"].append(mol_or_struct_copy)
     database_dict["test.extxyz"].append(mol_or_struct_copy)
+    if "database_size_limit" in database_dict:
+        while len(database_dict["train.extxyz"]) > database_dict["database_size_limit"]:
+            database_dict["train.extxyz"].pop(0)
+        while len(database_dict["test.extxyz"]) > database_dict["database_size_limit"]:
+            database_dict["test.extxyz"].pop(0)
     return database_dict
 
 @job
