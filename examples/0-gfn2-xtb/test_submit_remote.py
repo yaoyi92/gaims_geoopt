@@ -49,18 +49,6 @@ atoms = molecule.to_ase_atoms()
 list_training = []
 list_valid = []
 
-elements = set(atoms.get_chemical_symbols())
-for element in elements:
-    atoms_freeatom = ase.Atoms(element)
-    atoms_freeatom.calc = TBLite(method="GFN2-xTB")
-    atoms_freeatom.get_potential_energy()
-    atoms_freeatom.info['REF_energy'] = atoms_freeatom.get_potential_energy()
-    atoms_freeatom.arrays['REF_forces'] = np.array([[0.0, 0.0, 0.0]])
-    atoms_freeatom.info['REF_virial'] = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-    atoms_freeatom.info['config_type'] = "IsolatedAtom"
-    atoms_freeatom.calc = None
-    list_training.append(atoms_freeatom)
-
 adapter = AseAtomsAdaptor()
 database_dict = {
     "train.extxyz": [
@@ -76,8 +64,9 @@ database_dict = {
 
 
 
-fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.05)
-#response = run_locally(fl, create_folders=True)
+fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.05,
+                                    machine_learning_fit_kwargs={"foundation_model":"small", "device":"cpu", "default_dtype":"float32", "enable_cueq":False, "max_num_epochs":300},
+                                    relax_calculator_kwargs={"device":"cuda", "enable_cueq":False})
 
 resource = {"nodes": 1, "ntasks_per_node": 1, "cpus_per_task":20}
 
