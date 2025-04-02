@@ -2,17 +2,11 @@ from pymatgen.core import Molecule
 from jobflow import run_locally, job
 from pymatgen.io.ase import AseAtomsAdaptor
 import ase
+from tblite.ase import TBLite
 import numpy as np
-import logging
 from gaims_geoopt.flows import MLIPAssistedGeoOptMaker
 from ase.calculators.singlepoint import SinglePointCalculator
 from pathlib import Path
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
 
 molecule = Molecule.from_str(
 """3
@@ -23,22 +17,9 @@ H 0.0 1.0 0.0
 """,
 fmt="xyz",
 )
-atoms = molecule.to_ase_atoms()
-atomic_energies = {"O": -2043.567004718,  "H": -13.598030178}
 
 list_training = []
 list_valid = []
-
-elements = set(atoms.get_chemical_symbols())
-for element in elements:
-    atoms_freeatom = ase.Atoms(element)
-    atoms_freeatom.calc = SinglePointCalculator(atoms = atoms_freeatom, energy=atomic_energies[element])
-    atoms_freeatom.info['REF_energy'] = atoms_freeatom.get_potential_energy()
-    atoms_freeatom.arrays['REF_forces'] = np.array([[0.0, 0.0, 0.0]])
-    atoms_freeatom.info['REF_virial'] = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-    atoms_freeatom.info['config_type'] = "IsolatedAtom"
-    atoms_freeatom.calc = None
-    list_training.append(atoms_freeatom)
 
 adapter = AseAtomsAdaptor()
 database_dict = {
@@ -59,22 +40,35 @@ parameters = {
     "compute_forces": True,
 }
 
-fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.02, 
-                                    calculator = "aims", calculator_kwargs=parameters)
+
+
+
+fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.02, database_size_limit=5, 
+        machine_learning_fit_kwargs = {"max_num_epochs": 300}, relax_calculator_kwargs={"max_steps":300},
+        calculator = "aims", calculator_kwargs=parameters)
 response = run_locally(fl, create_folders=True)
 
+energies = []
+max_forces = []
+structures = []
 flow_now = fl
 while True:
     if flow_now is None:
         break
     for job in flow_now:
+        if job.name=="SCF Calculation":
+            energies.append(response[job.uuid][1].output.output.energy)
+            #structures.append(response[job.uuid][1].output.output.molecule.as_dict())
         if job.name=="evaluate_max_force":
-            print(response[job.uuid][1].output)
+            max_forces.append(response[job.uuid][1].output)
         if job.name=="get_mace_relax_job":
             relax_job_uuid = response[job.uuid][1].replace[0].uuid
-            print(response[relax_job_uuid][1].output.output.n_steps, end = " ")
+            #print(response[relax_job_uuid][1].output.output.n_steps, end = " ")
     for job in flow_now:
         if job.name=="check_convergence_and_next":
             uuid_next = job.uuid
     flow_now = response[uuid_next][1].replace
-    #print(flow_now)
+data={"energies": energies, "max_forces": max_forces, "structures": structures}
+with open('gaims_geoopt_result.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=4)
+
