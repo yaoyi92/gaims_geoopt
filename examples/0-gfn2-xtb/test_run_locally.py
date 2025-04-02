@@ -6,6 +6,7 @@ from tblite.ase import TBLite
 import numpy as np
 import logging
 from gaims_geoopt.flows import MLIPAssistedGeoOptMaker
+import json
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -47,18 +48,6 @@ atoms = molecule.to_ase_atoms()
 list_training = []
 list_valid = []
 
-elements = set(atoms.get_chemical_symbols())
-for element in elements:
-    atoms_freeatom = ase.Atoms(element)
-    atoms_freeatom.calc = TBLite(method="GFN2-xTB")
-    atoms_freeatom.get_potential_energy()
-    atoms_freeatom.info['REF_energy'] = atoms_freeatom.get_potential_energy()
-    atoms_freeatom.arrays['REF_forces'] = np.array([[0.0, 0.0, 0.0]])
-    atoms_freeatom.info['REF_virial'] = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-    atoms_freeatom.info['config_type'] = "IsolatedAtom"
-    atoms_freeatom.calc = None
-    list_training.append(atoms_freeatom)
-
 adapter = AseAtomsAdaptor()
 database_dict = {
     "train.extxyz": [
@@ -72,23 +61,34 @@ database_dict = {
 }
 
 
-
-
-fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.05)
+fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.05,
+                                    machine_learning_fit_kwargs={"foundation_model":"small", "device":"cpu", "default_dtype":"float32", "enable_cueq":False, "max_num_epochs":300},
+                                    relax_calculator_kwargs={"device":"cuda", "enable_cueq":False})
 response = run_locally(fl, create_folders=True)
 
+energies = []
+max_forces = []
+structures = []
 flow_now = fl
 while True:
     if flow_now is None:
         break
     for job in flow_now:
+        if job.name=="GFN-xTB static":
+            energies.append(response[job.uuid][1].output.output.energy)
+            structures.append(response[job.uuid][1].output.output.molecule.as_dict())
         if job.name=="evaluate_max_force":
-            print(response[job.uuid][1].output)
+            max_forces.append(response[job.uuid][1].output)
         if job.name=="get_mace_relax_job":
             relax_job_uuid = response[job.uuid][1].replace[0].uuid
-            print(response[relax_job_uuid][1].output.output.n_steps, end = " ")
+            #print(response[relax_job_uuid][1].output.output.n_steps, end = " ")
     for job in flow_now:
         if job.name=="check_convergence_and_next":
             uuid_next = job.uuid
     flow_now = response[uuid_next][1].replace
-    #print(flow_now)
+#print({"energies": energies, "max_forces": max_forces, "structures": structures})
+data={"energies": energies, "max_forces": max_forces, "structures": structures}
+with open('gaims_geoopt_result.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=4)
+
+
