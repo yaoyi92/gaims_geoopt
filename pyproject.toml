@@ -26,6 +26,7 @@ requires-python = ">=3.10,<3.12"
 dependencies = [
      "pymatgen>=2024.9.17.1",
      "pydantic==2.9.2",
+     "tblite",
      "atomate2 @ git+https://github.com/yaoyi92/atomate2.git@mol_for_forcefield",
      "autoplex @ git+https://github.com/yaoyi92/autoplex.git@gaims_geoopt_env",
      "ase==3.23.0",
