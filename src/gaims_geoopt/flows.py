@@ -12,20 +12,25 @@ logging.basicConfig(
 )
 
 @job 
-def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, database_size_limit, n_steps, machine_learning_fit_kwargs, relax_calculator_kwargs, calculator, calculator_kwargs):
-    if max_force < max_force_criteria or n_steps == 1:
+def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_force_criteria, n_gaims_geoopt_steps, max_gaims_geoopt_steps, database_size_limit, n_mlip_relax_steps, machine_learning_fit_kwargs, relax_calculator_kwargs, calculator, calculator_kwargs):
+    if n_gaims_geoopt_steps >= max_gaims_geoopt_steps:
+        logging.info(
+            f"MLIP assisted Geometry Optimization stopped reach maximum Geoopt steps, with max_force: {max_force} > {max_force_criteria}, ML assisted steps: {n_mlip_relax_steps}, Geoopt steps: {n_gaims_geoopt_steps} "
+        )
+        return None
+    if max_force < max_force_criteria or n_mlip_relax_steps == 2:
         if max_force < max_force_criteria:
             logging.info(
-                f"MLIP assisted Geometry Optimization Converged with max_force: {max_force} < {max_force_criteria}, ML assisted relax steps: {n_steps}"
+                    f"MLIP assisted Geometry Optimization Converged with max_force: {max_force} < {max_force_criteria}, ML assisted relax steps: {n_mlip_relax_steps}, Geoopt steps: {n_gaims_geoopt_steps}"
             )
-        elif n_steps == 1:
+        elif n_mlip_relax_steps == 2:
             logging.info(
                 f"MLIP assisted Geometry Optimization stuck with ML relax not moving."
             )
 
         return None
     logging.info(
-        f"MLIP assisted Geometry Optimization continues with max_force: {max_force} > {max_force_criteria}, ML assisted steps: {n_steps}"
+        f"MLIP assisted Geometry Optimization continues with max_force: {max_force} > {max_force_criteria}, ML assisted steps: {n_mlip_relax_steps}, Geoopt steps: {n_gaims_geoopt_steps} "
     )
     if last_dir is None:
         #foundation_model = "small"
@@ -86,6 +91,8 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
                                                                     job_macefit.output.mlip_path,
                                                                     job_max_force.output,
                                                                     max_force_criteria,
+                                                                    n_gaims_geoopt_steps+1,
+                                                                    max_gaims_geoopt_steps,
                                                                     database_size_limit,
                                                                     job_relax.output.output.n_steps,
                                                                     machine_learning_fit_kwargs,
@@ -104,6 +111,8 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
                                                                     job_macefit.output.mlip_path,
                                                                     job_max_force.output,
                                                                     max_force_criteria, 
+                                                                    n_gaims_geoopt_steps+1,
+                                                                    max_gaims_geoopt_steps,
                                                                     database_size_limit,
                                                                     job_relax.output.output.n_steps,
                                                                     machine_learning_fit_kwargs,
@@ -117,7 +126,7 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
 @dataclass    
 class MLIPAssistedGeoOptMaker(Maker):
     name: str = "MLIP assisted GeoOpt"
-    def make(self, molecule, database_dict, max_force_criteria, database_size_limit = 10, machine_learning_fit_kwargs={}, relax_calculator_kwargs={}, calculator = "GFN2-xTB", calculator_kwargs = {}):
+    def make(self, molecule, database_dict, max_force_criteria, max_gaims_geoopt_steps = 30, database_size_limit = 10, machine_learning_fit_kwargs={}, relax_calculator_kwargs={}, calculator = "GFN2-xTB", calculator_kwargs = {}):
         if calculator == "GFN2-xTB":
             job_static = GFNxTBStaticMaker(
                 calculator_kwargs={"method": "GFN2-xTB"},
@@ -129,6 +138,8 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         None,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
+                                                                        0,
+                                                                        max_gaims_geoopt_steps,
                                                                         database_size_limit,
                                                                         -1,
                                                                         machine_learning_fit_kwargs,
@@ -147,6 +158,8 @@ class MLIPAssistedGeoOptMaker(Maker):
                                                                         None,
                                                                         job_max_force.output,
                                                                         max_force_criteria, 
+                                                                        0,
+                                                                        max_gaims_geoopt_steps,
                                                                         database_size_limit,
                                                                         -1,
                                                                         machine_learning_fit_kwargs,
