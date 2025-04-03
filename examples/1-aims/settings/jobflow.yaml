@@ -1,0 +1,15 @@
+JOB_STORE:
+  docs_store:
+    type: MongoStore
+    database: atomate2
+    host: localhost
+    port: 27017
+    collection_name: outputs
+  additional_stores:
+    data:
+      type: GridFSStore
+      database: atomate2
+      host: localhost
+      port: 27017
+      collection_name: outputs_blobs
+

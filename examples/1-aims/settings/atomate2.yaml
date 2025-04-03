@@ -1,0 +1,1 @@
+AIMS_CMD: mpirun -n 28 /home/yiy/Test/fhi-aims/FHIaims/build/aims.241121.mpi.x > aims.out

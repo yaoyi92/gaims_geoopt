@@ -1,0 +1,2 @@
+export ATOMATE2_CONFIG_FILE="${HOME}/atomate2-workflows/config/atomate2.yaml"
+export JOBFLOW_CONFIG_FILE="${HOME}/atomate2-workflows/config/jobflow.yaml"

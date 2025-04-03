@@ -1,0 +1,54 @@
+name: yiy_workstation
+workers:
+  precision_tower_worker:
+    type: remote
+    scheduler_type: slurm
+    work_dir: /home/yiy/Test/slurm_jobs_dir
+    pre_run: |
+      source /home/yiy/.bashrc
+      export JOBFLOW_CONFIG_FILE="/home/yiy/atomate2-workflows/config/jobflow.yaml"
+      export ATOMATE2_CONFIG_FILE="/home/yiy/.config/atomate2/atomate2.yaml"
+      source /home/yiy/miniconda3/etc/profile.d/conda.sh
+      conda activate dashboard_sisso
+      echo $ATOMATE2_CONFIG_FILE
+      echo $JOBFLOW_CONFIG_FILE
+      ulimit -s unlimited
+    timeout_execute: 60
+    host: localhost
+    user: yiy
+  precision_tower_worker_mace:
+    type: remote
+    scheduler_type: slurm
+    work_dir: /home/yiy/Test/slurm_jobs_dir
+    pre_run: |
+      source /home/yiy/.bashrc
+      export JOBFLOW_CONFIG_FILE="/home/yiy/atomate2-workflows/config/jobflow.yaml"
+      export ATOMATE2_CONFIG_FILE="/home/yiy/.config/atomate2/atomate2.yaml"
+      source /home/yiy/Test/000-active-learning-workflow/test_env/gaims_geoopt_venv/bin/activate
+      echo $ATOMATE2_CONFIG_FILE
+      echo $JOBFLOW_CONFIG_FILE
+      ulimit -s unlimited
+    timeout_execute: 60
+    host: localhost
+    user: yiy
+queue:
+  store:
+    type: MongoStore
+    host: localhost
+    database: db_name
+    collection_name: jobs
+exec_config: {}
+jobstore:
+  docs_store:
+    type: MongoStore
+    database: yiy_workstation
+    host: localhost
+    port: 27017
+    collection_name: outputs
+  additional_stores:
+    data:
+      type: GridFSStore
+      database: yiy_workstation
+      host: localhost
+      port: 27017
+      collection_name: outputs_blobs
