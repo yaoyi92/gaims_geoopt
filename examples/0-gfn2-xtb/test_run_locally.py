@@ -4,15 +4,8 @@ from pymatgen.io.ase import AseAtomsAdaptor
 import ase
 from tblite.ase import TBLite
 import numpy as np
-import logging
 from gaims_geoopt.flows import MLIPAssistedGeoOptMaker
 import json
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
 
 molecule = Molecule.from_str(
 """24

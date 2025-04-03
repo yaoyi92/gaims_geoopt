@@ -3,17 +3,9 @@ from jobflow import run_locally, job
 from pymatgen.io.ase import AseAtomsAdaptor
 import ase
 import numpy as np
-import logging
 from gaims_geoopt.flows import MLIPAssistedGeoOptMaker
 from jobflow_remote import submit_flow, set_run_config
 from pathlib import Path
-
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
 
 molecule = Molecule.from_str(
 """24
@@ -85,20 +77,3 @@ fl = set_run_config(fl, name_filter="SCF Calculation", resources=resource_aims, 
 j_id = submit_flow(fl, project="yiy_workstation", resources=resource_mace, worker="precision_tower_worker_mace")
 print(fl)
 print(j_id)
-
-
-#flow_now = fl
-#while True:
-#    if flow_now is None:
-#        break
-#    for job in flow_now:
-#        if job.name=="evaluate_max_force":
-#            print(response[job.uuid][1].output)
-#        if job.name=="get_mace_relax_job":
-#            relax_job_uuid = response[job.uuid][1].replace[0].uuid
-#            print(response[relax_job_uuid][1].output.output.n_steps, end = " ")
-#    for job in flow_now:
-#        if job.name=="check_convergence_and_next":
-#            uuid_next = job.uuid
-#    flow_now = response[uuid_next][1].replace
-#    #print(flow_now)
