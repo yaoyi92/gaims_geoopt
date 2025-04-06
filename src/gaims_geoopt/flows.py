@@ -6,6 +6,7 @@ import logging
 from gaims_geoopt.jobs import evaluate_max_force, add_structure_database, get_mace_relax_job
 from atomate2.aims.jobs.core import StaticMaker as AimsStaticMaker
 from pymatgen.io.aims.sets.core import StaticSetGenerator
+from pymatgen.core import Structure, Molecule
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -128,6 +129,11 @@ class MLIPAssistedGeoOptMaker(Maker):
     name: str = "MLIP assisted GeoOpt"
     def make(self, molecule, database_dict, max_force_criteria, max_gaims_geoopt_steps = 30, database_size_limit = 10, machine_learning_fit_kwargs={}, relax_calculator_kwargs={}, calculator = "GFN2-xTB", calculator_kwargs = {}):
         if calculator == "GFN2-xTB":
+            if isinstance(molecule, Structure):
+                logging.info(
+                    f"Requesting a GFN2-xTB for periodic system which is not supported."
+                )
+                return None
             job_static = GFNxTBStaticMaker(
                 calculator_kwargs={"method": "GFN2-xTB"},
             ).make(molecule)
