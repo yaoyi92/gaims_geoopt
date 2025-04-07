@@ -11,17 +11,6 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from pathlib import Path
 import json
 
-
-
-#molecule = Molecule.from_str(
-#"""3
-#Properties=species:S:1:pos:R:3 pbc="F F F"
-#O 0.0 0.0 0.0
-#H 1.0 0.0 0.0
-#H 0.0 1.0 0.0
-#""",
-#fmt="xyz",
-#)
 cnt1 = nanotube(6, 0, length=1)
 cnt1.set_pbc(True)
 cnt1.set_cell([20.0, 20.0, cnt1.get_cell()[2,2]])
@@ -49,9 +38,6 @@ parameters = {
     "compute_forces": True,
     "k_grid": [1,1,10],
 }
-
-
-
 
 fl = MLIPAssistedGeoOptMaker().make(molecule, database_dict, 0.02, database_size_limit=5, 
         machine_learning_fit_kwargs = {"max_num_epochs": 300}, relax_calculator_kwargs={"max_steps":300},
