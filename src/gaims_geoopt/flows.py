@@ -3,7 +3,7 @@ from atomate2.ase.jobs import GFNxTBStaticMaker
 from jobflow import Flow, job, Response, Maker
 from autoplex.fitting.common.jobs import machine_learning_fit
 import logging
-from gaims_geoopt.jobs import evaluate_max_force, add_structure_database, get_mace_relax_job, 
+from gaims_geoopt.jobs import evaluate_max_force, add_structure_database, get_mace_relax_job, extract_mol_or_structure
 from atomate2.aims.jobs.core import StaticMaker as AimsStaticMaker
 from pymatgen.io.aims.sets.core import StaticSetGenerator
 from pymatgen.core import Structure, Molecule
