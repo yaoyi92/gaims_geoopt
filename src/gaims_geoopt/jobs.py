@@ -40,6 +40,7 @@ def get_mace_relax_job(mlip_output, struct, max_force_criteria, relax_calculator
     calculator_kwargs.update(relax_calculator_kwargs)
     mace_maker = ForceFieldRelaxMaker(
         force_field_name = MLFF.MACE,
+        relax_cell = False,
         steps=steps,
         calculator_kwargs = calculator_kwargs,
         relax_kwargs = {'fmax':max_force_criteria/10})
