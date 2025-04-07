@@ -3,7 +3,7 @@ from atomate2.ase.jobs import GFNxTBStaticMaker
 from jobflow import Flow, job, Response, Maker
 from autoplex.fitting.common.jobs import machine_learning_fit
 import logging
-from gaims_geoopt.jobs import evaluate_max_force, add_structure_database, get_mace_relax_job
+from gaims_geoopt.jobs import evaluate_max_force, add_structure_database, get_mace_relax_job, 
 from atomate2.aims.jobs.core import StaticMaker as AimsStaticMaker
 from pymatgen.io.aims.sets.core import StaticSetGenerator
 from pymatgen.core import Structure, Molecule
@@ -101,10 +101,12 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
                                                                     calculator,
                                                                     calculator_kwargs,
                                                                     )
+        flow = Flow([job_macefit, job_relax, job_static, job_max_force, job_add_database, job_check_convergence_and_next])
     elif calculator == "aims":
+        job_mol_or_structure = extract_mol_or_structure(job_relax.output.output)
         job_static = AimsStaticMaker(
             input_set_generator=StaticSetGenerator(user_params=calculator_kwargs)
-        ).make(job_relax.output.output.molecule)
+        ).make(job_mol_or_structure.output)
         job_max_force = evaluate_max_force(job_static.output.output.forces)
         job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces, database_size_limit)
         job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
@@ -121,7 +123,7 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
                                                                     calculator,
                                                                     calculator_kwargs
                                                                     )
-    flow = Flow([job_macefit, job_relax, job_static, job_max_force, job_add_database, job_check_convergence_and_next])
+        flow = Flow([job_macefit, job_relax, job_mol_or_structure, job_static, job_max_force, job_add_database, job_check_convergence_and_next])
     return Response(replace=flow)
 
 @dataclass    

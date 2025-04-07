@@ -9,6 +9,13 @@ def evaluate_max_force(forces):
     return np.max(np.sum(forces**2, axis=1)**0.5)
 
 @job
+def extract_mol_or_structure(mace_relax_output):
+    if mace_relax_output.molecule is not None:
+        return mace_relax_output.molecule
+    else:
+        return mace_relax_output.structure
+
+@job
 def add_structure_database(database_dict, mol_or_struct, forces, database_size_limit = 10):
     mol_or_struct_copy = mol_or_struct.copy()
     mol_or_struct_copy.properties["REF_energy"] = mol_or_struct.properties["energy"]
