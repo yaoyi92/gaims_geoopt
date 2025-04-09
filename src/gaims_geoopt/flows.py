@@ -85,9 +85,9 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
         job_static = GFNxTBStaticMaker(
             calculator_kwargs={"method": "GFN2-xTB"},
         ).make(job_relax.output.output.molecule)
-        job_max_force = evaluate_max_force(job_static.output.output.forces)
+        job_max_force = evaluate_max_force(job_static.output.output.forces, job_relax.output.output.molecule )
         job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces, database_size_limit)
-        job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
+        job_check_convergence_and_next = check_convergence_and_next(job_relax.output.output.molecule,
                                                                     job_add_database.output,
                                                                     job_macefit.output.mlip_path,
                                                                     job_max_force.output,
@@ -107,9 +107,9 @@ def check_convergence_and_next(struct, database_dict, last_dir, max_force, max_f
         job_static = AimsStaticMaker(
             input_set_generator=StaticSetGenerator(user_params=calculator_kwargs)
         ).make(job_mol_or_structure.output)
-        job_max_force = evaluate_max_force(job_static.output.output.forces)
+        job_max_force = evaluate_max_force(job_static.output.output.forces, job_mol_or_structure.output)
         job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces, database_size_limit)
-        job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
+        job_check_convergence_and_next = check_convergence_and_next(job_mol_or_structure.output,
                                                                     job_add_database.output,
                                                                     job_macefit.output.mlip_path,
                                                                     job_max_force.output,
@@ -139,9 +139,9 @@ class MLIPAssistedGeoOptMaker(Maker):
             job_static = GFNxTBStaticMaker(
                 calculator_kwargs={"method": "GFN2-xTB"},
             ).make(molecule)
-            job_max_force = evaluate_max_force(job_static.output.output.forces)
+            job_max_force = evaluate_max_force(job_static.output.output.forces, molecule)
             job_add_database = add_structure_database(database_dict, job_static.output.output.mol_or_struct, job_static.output.output.forces, database_size_limit)
-            job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.mol_or_struct,
+            job_check_convergence_and_next = check_convergence_and_next(molecule,
                                                                         job_add_database.output,
                                                                         None,
                                                                         job_max_force.output,
@@ -159,9 +159,9 @@ class MLIPAssistedGeoOptMaker(Maker):
             job_static = AimsStaticMaker(
                 input_set_generator=StaticSetGenerator(user_params=calculator_kwargs)
             ).make(molecule)
-            job_max_force = evaluate_max_force(job_static.output.output.forces)
+            job_max_force = evaluate_max_force(job_static.output.output.forces, molecule)
             job_add_database = add_structure_database(database_dict, job_static.output.output.structure, job_static.output.output.forces, database_size_limit)
-            job_check_convergence_and_next = check_convergence_and_next(job_static.output.output.structure,
+            job_check_convergence_and_next = check_convergence_and_next(molecule,
                                                                         job_add_database.output,
                                                                         None,
                                                                         job_max_force.output,

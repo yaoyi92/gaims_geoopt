@@ -4,8 +4,11 @@ from jobflow import Flow, job, Response
 import numpy as np
 
 @job
-def evaluate_max_force(forces):
+def evaluate_max_force(forces, molecule):
+    atoms = molecule.to_ase_atoms()
     forces = np.array(forces)
+    for constraint in atoms.constraints:
+        constraint.adjust_forces(atoms, forces)
     return np.max(np.sum(forces**2, axis=1)**0.5)
 
 @job
