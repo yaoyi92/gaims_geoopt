@@ -11,9 +11,13 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from pathlib import Path
 import json
 
+from ase.constraints import FixAtoms
+
 cnt1 = nanotube(6, 0, length=1)
 cnt1.set_pbc(True)
 cnt1.set_cell([20.0, 20.0, cnt1.get_cell()[2,2]])
+constraint_atoms = FixAtoms(mask=[True]*12+[False]*12)
+cnt1.set_constraint(constraint_atoms)
 molecule = Structure.from_ase_atoms(cnt1)
 
 list_training = []
@@ -54,7 +58,11 @@ while True:
     for job in flow_now:
         if job.name=="SCF Calculation":
             energies.append(response[job.uuid][1].output.output.energy)
-            #structures.append(response[job.uuid][1].output.output.structure.as_dict())
+            structure_tmp = response[job.uuid][1].output.output.structure.as_dict()
+            for site in structure_tmp['sites']:
+                if isinstance(site['properties']['force'], np.ndarray):
+                    site['properties']['force'] = site['properties']['force'].tolist()
+            structures.append(structure_tmp)
         if job.name=="evaluate_max_force":
             max_forces.append(response[job.uuid][1].output)
         if job.name=="get_mace_relax_job":

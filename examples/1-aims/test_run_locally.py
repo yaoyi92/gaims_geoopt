@@ -58,7 +58,11 @@ while True:
     for job in flow_now:
         if job.name=="SCF Calculation":
             energies.append(response[job.uuid][1].output.output.energy)
-            #structures.append(response[job.uuid][1].output.output.molecule.as_dict())
+            structure_tmp = response[job.uuid][1].output.output.structure.as_dict()
+            for site in structure_tmp['sites']:
+                if isinstance(site['properties']['force'], np.ndarray):
+                    site['properties']['force'] = site['properties']['force'].tolist()
+            structures.append(structure_tmp)
         if job.name=="evaluate_max_force":
             max_forces.append(response[job.uuid][1].output)
         if job.name=="get_mace_relax_job":
