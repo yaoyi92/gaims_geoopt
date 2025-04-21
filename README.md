@@ -46,7 +46,7 @@ pip install .[workflow-managers]
 | Scenario            | What to do                                                                 |
 |---------------------|-----------------------------------------------------------------------------|
 | **Remote execution** (`jobflow_remote`) | 1. Add your cluster to `~/.jobflow_remote.toml`.<br>2. Launch the worker with `jfr runner &`. |
-| **FHI‑aims**        | Ensure `BIN/aims.XX.x` is in `$PATH` and set `AIMS_SPECIES_DIR` to the species directory. |
+| **FHI‑aims**        | Make sure atomate2 FHI-aims works fine.|
 
 ---
 
