@@ -1,6 +1,6 @@
 # gaims_geoopt
 
-**Machine‑Learning‑assisted Geometry Optimisation with GAIMS, MACE, and `jobflow`**
+**Machine‑Learning‑assisted Geometry Optimisation with FHI-aims, MACE, and `jobflow`**
 
 `gaims_geoopt` orchestrates an *active‑learning* workflow that couples high‑accuracy
 FHI‑aims reference calculations with fast MACE force‑field
@@ -17,8 +17,8 @@ fraction of the cost.
 
 - **Hybrid optimisation loop**: GAIMS reference → database update → MACE fit →
   ML‑relax → *repeat until converged*.
-- Supports **molecular** (GFN2‑xTB) *and* **periodic** (FHI‑aims) systems.
-- Runs anywhere `jobflow` can: local machine, HPC scheduler, or
+- Supports GFN2‑xTB (**molecular**) *and* FHI-aims (**molecular/periodic**) as references.
+- Runs anywhere `jobflow` can: local machine, HPC scheduler via
   [`jobflow_remote`](https://materialsproject.github.io/jobflow-remote/).
 - Rolling in‑memory EXTXYZ database keeps the workflow lightweight.
 - Highly configurable via keyword overrides – tweak training hyper‑parameters,
